@@ -1,0 +1,100 @@
+.root {
+    -fx-font-family: "Segoe UI", "Inter", "Roboto", sans-serif;
+    -fx-background-color: linear-gradient(to bottom right, #0e0f13, #151822);
+}
+
+.brand-bg {
+    -fx-background-color: linear-gradient(to right, #11131a, #171a24);
+}
+
+.card {
+    -fx-background-color: #1b1f2a;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 16, 0.2, 0, 6);
+    -fx-padding: 20 24 20 24;
+}
+
+.title {
+    -fx-font-size: 28px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #f5f6f8;
+}
+
+.subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #a8adbb;
+}
+
+.text {
+    -fx-text-fill: #d9dbe1;
+}
+
+.accent {
+    -fx-text-fill: #ff6fa3;
+}
+
+.textfield, .passwordfield {
+    -fx-background-color: #12151d, #12151d, #12151d;
+    -fx-background-insets: 0 0 -1 0, 0, 1;
+    -fx-background-radius: 10;
+    -fx-padding: 10 12 10 12;
+    -fx-text-fill: #e5e8ef;
+    -fx-prompt-text-fill: #7b8092;
+    -fx-border-color: rgba(255,255,255,0.06);
+    -fx-border-radius: 10;
+}
+
+.primary-button {
+    -fx-background-color: linear-gradient(to right, #ff6fa3, #ff3d7d);
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-font-weight: 600;
+    -fx-padding: 10 18 10 18;
+}
+
+.ghost-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #c9ceda;
+    -fx-border-color: rgba(255,255,255,0.12);
+    -fx-border-radius: 10;
+    -fx-padding: 9 16 9 16;
+}
+
+.danger-button {
+    -fx-background-color: #e04d5a;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+}
+
+.toolbar {
+    -fx-background-color: transparent;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #d9dbe1;
+    -fx-padding: 8 12 8 12;
+}
+
+.table-view {
+    -fx-background-color: transparent;
+}
+
+.table-view:row-selection .column-header-background {
+    -fx-background-color: #10131a;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #141824;
+}
+.table-row-cell:even {
+    -fx-background-color: #121622;
+}
+.table-row-cell:selected {
+    -fx-background-color: #2a2f3d;
+}
+.table-cell {
+    -fx-text-fill: #dfe3ea;
+}
+
+

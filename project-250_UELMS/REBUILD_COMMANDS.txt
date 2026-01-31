@@ -1,0 +1,73 @@
+===========================================
+EXACT COMMANDS TO REBUILD THE APPLICATION
+===========================================
+
+IMPORTANT: Close the application first if it's running!
+
+Method 1: Using the rebuild script (Easiest)
+---------------------------------------------
+1. Open PowerShell or Command Prompt
+2. Navigate to the project directory:
+   cd "C:\Users\MY PC\Desktop\uni save\project-250_UELMS\University Management System"
+
+3. Run the rebuild script:
+   powershell -ExecutionPolicy Bypass -File "rebuild_fix.ps1"
+
+
+Method 2: Manual rebuild using javac and jar
+---------------------------------------------
+1. Open PowerShell
+2. Navigate to the project directory:
+   cd "C:\Users\MY PC\Desktop\uni save\project-250_UELMS\University Management System"
+
+3. Set classpath:
+   $env:CLASSPATH = "dist\lib\activation-1.1.1.jar;dist\lib\javax.mail-1.6.2.jar;dist\lib\jcalendar-tz-1.3.3-4.jar;dist\lib\mysql-connector-java-8.0.28.jar;dist\lib\rs2xml.jar"
+
+4. Create build directory:
+   New-Item -ItemType Directory -Force -Path "build\classes" | Out-Null
+
+5. Compile all Java files:
+   javac -d "build\classes" -cp $env:CLASSPATH -encoding UTF-8 src\university\management\system\*.java
+
+6. Copy resources:
+   Copy-Item -Path "src\**\*.properties" -Destination "build\classes" -Recurse -Force
+   Copy-Item -Path "src\**\*.xml" -Destination "build\classes" -Recurse -Force
+
+7. Create manifest file:
+   @"
+Manifest-Version: 1.0
+Main-Class: university.management.system.Login
+Class-Path: lib/activation-1.1.1.jar lib/javax.mail-1.6.2.jar lib/jcalendar-tz-1.3.3-4.jar lib/mysql-connector-java-8.0.28.jar lib/rs2xml.jar
+"@ | Out-File -FilePath "build\classes\MANIFEST.MF" -Encoding ASCII
+
+8. Create JAR file:
+   jar cfm "dist\University_Management_System.jar" "build\classes\MANIFEST.MF" -C "build\classes" .
+
+
+Method 3: Using Ant (if you have Apache Ant installed)
+------------------------------------------------------
+1. Open Command Prompt or PowerShell
+2. Navigate to the project directory:
+   cd "C:\Users\MY PC\Desktop\uni save\project-250_UELMS\University Management System"
+
+3. Clean and build:
+   ant clean
+   ant build
+
+   OR if that doesn't work:
+   ant clean compile jar
+
+
+QUICK COPY-PASTE COMMANDS (Method 1 - Recommended)
+===================================================
+Copy and paste these commands one by one in PowerShell:
+
+cd "C:\Users\MY PC\Desktop\uni save\project-250_UELMS\University Management System"
+powershell -ExecutionPolicy Bypass -File "rebuild_fix.ps1"
+
+
+After rebuilding, run the application:
+=======================================
+cd "C:\Users\MY PC\Desktop\uni save\project-250_UELMS\University Management System\dist"
+java -jar University_Management_System.jar
+

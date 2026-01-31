@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="University_Management_System" default="default" basedir=".">
+    <description>Builds, tests, and runs the project University Management System.</description>
+    
+    <!-- Custom properties -->
+    <property name="app.name" value="University_Management_System"/>
+    <property name="app.version" value="1.0"/>
+    <property name="src.dir" value="src"/>
+    <property name="build.dir" value="build"/>
+    <property name="dist.dir" value="dist"/>
+    <property name="lib.dir" value="${dist.dir}/lib"/>
+    <property name="main.class" value="university.management.system.Login"/>
+    
+    <!-- Import the standard build-impl.xml -->
+    <import file="nbproject/build-impl.xml"/>
+    
+    <!-- Override the default jar target to include custom manifest and resources -->
+    <target name="-post-jar">
+        <!-- Create a new manifest with proper classpath and main class -->
+        <manifest file="${build.classes.dir}/META-INF/MANIFEST.MF">
+            <attribute name="Main-Class" value="${main.class}"/>
+            <attribute name="Class-Path" value="lib/activation-1.1.1.jar lib/javax.mail-1.6.2.jar lib/jcalendar-tz-1.3.3-4.jar lib/mysql-connector-java-8.0.28.jar lib/rs2xml.jar ."/>
+            <attribute name="Implementation-Title" value="${app.name}"/>
+            <attribute name="Implementation-Version" value="${app.version}"/>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Created-By" value="${java.version} (${java.vendor})"/>
+        </manifest>
+        
+        <!-- Create the final JAR with all resources -->
+        <jar destfile="${dist.dir}/${app.name}.jar" update="true" duplicate="preserve">
+            <manifest>
+                <attribute name="Main-Class" value="${main.class}"/>
+                <attribute name="Class-Path" value="lib/activation-1.1.1.jar lib/javax.mail-1.6.2.jar lib/jcalendar-tz-1.3.3-4.jar lib/mysql-connector-java-8.0.28.jar lib/rs2xml.jar"/>
+            </manifest>
+            <fileset dir="${build.classes.dir}" includes="**/*.class"/>
+            <fileset dir="${src.dir}" includes="**/*.properties,**/*.xml,**/*.jpg,**/*.png"/>
+            <fileset dir="." includes="META-INF/**/*"/>
+        </jar>
+        
+        <!-- Copy required libraries to the lib directory -->
+        <mkdir dir="${lib.dir}"/>
+        <!-- Copy all JARs from the project's lib directory if it exists -->
+        <copy todir="${lib.dir}" failonerror="false">
+            <fileset dir="${basedir}/lib" includes="*.jar"/>
+            <fileset dir="${basedir}/../lib" includes="*.jar"/>
+            <fileset dir="${basedir}/../../lib" includes="*.jar"/>
+        </copy>
+        
+        <!-- If no JARs were found, create a placeholder file -->
+        <available file="${lib.dir}/" property="lib.dir.exists"/>
+        <fail message="No JAR files found in lib directory. Please make sure all required JARs are in the lib folder.">
+            <condition>
+                <not>
+                    <resourcecount when="greater" count="0">
+                        <fileset dir="${lib.dir}" includes="*.jar"/>
+                    </resourcecount>
+                </not>
+            </condition>
+        </fail>
+        
+        <echo message="JAR file created at ${dist.dir}/${app.name}.jar"/>
+    </target>
+    
+    <!-- Clean up build artifacts -->
+    <target name="clean-build" depends="clean,jar" description="Clean and build the project">
+        <echo message="Project cleaned and built successfully"/>
+    </target>
+    <!-- Custom target to run the application -->
+    <target name="run" depends="jar" description="Run the application">
+        <java jar="${dist.dir}/${app.name}.jar" fork="true">
+            <jvmarg value="-Dswing.defaultlaf=javax.swing.plaf.nimbus.NimbusLookAndFeel"/>
+            <jvmarg value="-Dawt.useSystemAAFontSettings=on"/>
+            <jvmarg value="-Dswing.aatext=true"/>
+        </java>
+    </target>
+</project>

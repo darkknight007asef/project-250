@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>University Management System (UEMS) - Planning & Design</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --primary: #0b5fff;
+    --accent: #6c63ff;
+    --text: #1b1f24;
+    --muted: #4b5563;
+    --bg: #ffffff;
+    --soft: #f6f7fb;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--soft); color: var(--text); font-family: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+  .page { max-width: 1100px; margin: 40px auto; background: var(--bg); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
+  header { padding: 28px 36px; background: linear-gradient(120deg, var(--primary), var(--accent)); color: white; }
+  header h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: .3px; }
+  header p { margin: 0; opacity: .92; }
+  .container { padding: 28px 36px; }
+  h2 { margin: 28px 0 12px; font-size: 22px; color: var(--primary);}
+  h3 { margin: 22px 0 8px; font-size: 18px; color: var(--text);}  
+  p { line-height: 1.65; color: var(--muted);}  
+  ul { margin: 8px 0 16px 20px; color: var(--muted);}  
+  code, pre { background: #0f172a; color: #e5e7eb; border-radius: 10px; }
+  pre { padding: 16px; overflow: auto; border: 1px solid #111827; }
+  code.inline { padding: 2px 6px; border-radius: 6px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .kpi { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+  .kpi .card { text-align: center; }
+  .muted { color: var(--muted); }
+  .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--soft); color: var(--muted); font-size: 12px; }
+  .callout { border-left: 4px solid var(--primary); background: #f0f5ff; padding: 12px 14px; border-radius: 6px; }
+  .footer { padding: 16px 36px 36px; color: var(--muted); font-size: 13px; }
+  .two-col pre { height: 100%; }
+  .print-hint { font-size: 12px; color: #374151; background: #eef2ff; border: 1px dashed #c7d2fe; padding: 8px 10px; border-radius: 8px; }
+  @media print { 
+    .page { border: none; box-shadow: none; }
+    header { border-radius: 0; }
+    .print-hint { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>University Management System (UEMS)</h1>
+      <p>Planning & Design Document • Date: 2025-09-23</p>
+    </header>
+    <div class="container">
+      <div class="print-hint"></div>
+
+      <h2>1) Core Theme and Vision</h2>
+      <ul>
+        <li><b>Unified desktop system</b> digitizing student and faculty lifecycles, departmental curricula, and examinations, with a roadmap to Employee and Library modules.</li>
+        <li><b>Modular Swing application</b> with JDBC MySQL backend; clear separation of UI forms and data operations.</li>
+        <li><b>Deterministic academic flows</b> for admissions, curriculum, marks, CGPA, and promotion with auditable SQL operations.</li>
+      </ul>
+
+      <h2>2) Environment & Tooling Setup</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Stack</h3>
+          <ul>
+            <li><b>Language</b>: Java (JDK 8+)</li>
+            <li><b>UI</b>: Swing</li>
+            <li><b>DB</b>: MySQL 8.x</li>
+            <li><b>ORM</b>: JDBC (Connector/J)</li>
+            <li><b>Build</b>: Ant (NetBeans project)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Libraries</h3>
+          <ul>
+            <li><b>JDBC driver</b>: com.mysql.cj.jdbc.Driver</li>
+            <li><b>Date picker</b>: JCalendar (JDateChooser)</li>
+            <li><b>Tables</b>: DbUtils for JTable models</li>
+            <li><b>Email</b>: JavaMail (optional)</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>JDBC Bootstrap</h3>
+      <pre><code class="language-java">Class.forName("com.mysql.cj.jdbc.Driver");
+Connection c = DriverManager.getConnection(
+  "jdbc:mysql://localhost:3306/universitymanagementsystem",
+  "root",
+  "&lt;your_password&gt;"
+);
+</code></pre>
+
+      <h2>3) High-Level Architecture</h2>
+      <div class="grid two-col">
+        <div class="card">
+          <h3>Layers</h3>
+          <ul>
+            <li><b>Presentation (Swing)</b>: <code>Splash.java</code> → <code>Login.java</code> → <code>Project.java</code> menu</li>
+            <li><b>Features</b>: <code>AddStudent.java</code>, <code>AddTeacher.java</code>, <code>StudentDetails.java</code>, <code>TeacherDetails.java</code>, <code>EnterMarks.java</code>, <code>Dept.java</code>, <code>Forget_pass.java</code></li>
+            <li><b>Data Access</b>: <code>Conn.java</code> centralizes JDBC connection + statement</li>
+            <li><b>Data Store</b>: MySQL schema for students, teachers, departments, courses, marks, authentication</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Feature Map</h3>
+          <ul>
+            <li><b>Admissions</b>: Student/Teacher create flows</li>
+            <li><b>Directories</b>: Search/filter students and teachers</li>
+            <li><b>Departments</b>: Credits and course catalogue</li>
+            <li><b>Exams</b>: Marks entry, CGPA, promotion</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>4) Module-by-Module Design</h2>
+      <div class="card">
+        <h3>Authentication — <code>src/university/management/system/Login.java</code></h3>
+        <p class="muted">Validates user via <code>login</code> table and opens main menu on success.</p>
+        <pre><code class="language-java">String q = "select * from login where username='"+u+"' and password='"+p+"'";
+ResultSet rs = c.s.executeQuery(q);
+if (rs.next()) new Project();
+</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Main Navigation — <code>Project.java</code></h3>
+        <p class="muted">Top-level <code>JMenuBar</code> organizes features and launches windows, e.g. <code>new AddStudent()</code>, <code>new TeacherDetails()</code>, <code>new EnterMarks()</code>, <code>new Dept()</code>.</p>
+      </div>
+
+      <div class="card">
+        <h3>Admissions (Student) — <code>AddStudent.java</code></h3>
+        <ul>
+          <li>Collects profile data; constructs deterministic <i>registration number</i>: <code>&lt;year&gt;-&lt;deptCode&gt;-&lt;roll3&gt;</code>.</li>
+          <li>Writes to <code>student</code> and initializes <code>student_semester</code>.</li>
+        </ul>
+        <pre><code class="language-java">String registrationNo = xii + "-" + dept + "-" + rollFormatted;
+String studentQuery = "INSERT INTO student VALUES(...)";
+String semesterQuery = "INSERT INTO student_semester(registration_no, dept) VALUES(...)";
+</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Admissions (Faculty) — <code>AddTeacher.java</code></h3>
+        <p class="muted">Captures qualifications and department; inserts into <code>teacher</code>.</p>
+      </div>
+
+      <div class="card">
+        <h3>Directories — <code>StudentDetails.java</code> / <code>TeacherDetails.java</code></h3>
+        <p class="muted">Search/filter + print using <code>DbUtils.resultSetToTableModel(rs)</code>.</p>
+      </div>
+
+      <div class="card">
+        <h3>Departments & Curriculum — <code>Dept.java</code></h3>
+        <p class="muted">Credit summary (sem1–sem8) from <code>department_credit</code>; courses from <code>department_courses</code>.</p>
+      </div>
+
+      <div class="card">
+        <h3>Examinations & CGPA — <code>EnterMarks.java</code></h3>
+        <ul>
+          <li>Fetch current semester and department; load course list; capture grade points.</li>
+          <li>Upsert into <code>student_marks</code>; compute Semester and Cumulative CGPA; promote when applicable.</li>
+        </ul>
+        <pre><code class="language-java">String upsert = "INSERT INTO student_marks (registration_no, semester, course_code, credit, grade_point) ..."
+  + " ON DUPLICATE KEY UPDATE grade_point = " + gradePoint;
+</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Password Recovery — <code>Forget_pass.java</code> (Optional)</h3>
+        <p class="muted">Looks up user and emails credentials via JavaMail (configurable).</p>
+      </div>
+
+      <h2>5) Data Model (Operational Scope)</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Key Tables</h3>
+          <ul>
+            <li><code>student</code>, <code>student_semester</code></li>
+            <li><code>teacher</code></li>
+            <li><code>department_credit</code>, <code>department_courses</code></li>
+            <li><code>student_marks</code></li>
+            <li><code>login</code>, <code>FORGET_PASS</code></li>
+          </ul>
+        </div>
+        <div class="card">
+<pre><code class="language-sql">CREATE TABLE student_marks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  registration_no VARCHAR(20),
+  semester INT,
+  course_code VARCHAR(10),
+  credit DECIMAL(4,1),
+  grade_point DECIMAL(3,2),
+  obtained_credit DECIMAL(4,1) GENERATED ALWAYS AS (CASE WHEN grade_point > 0 THEN credit ELSE 0 END) STORED,
+  status VARCHAR(10) GENERATED ALWAYS AS (CASE WHEN grade_point > 0 THEN 'Passed' ELSE 'Failed' END) STORED,
+  FOREIGN KEY (registration_no) REFERENCES student(registration_no),
+  UNIQUE KEY unique_marks (registration_no, semester, course_code)
+);
+</code></pre>
+        </div>
+      </div>
+
+      <h2>6) Non-Functional Requirements</h2>
+      <ul>
+        <li><b>Usability</b>: Consistent forms, validation, and feedback.</li>
+        <li><b>Performance</b>: Efficient table rendering; succinct queries.</li>
+        <li><b>Reliability</b>: Deterministic IDs; idempotent UPSERT for marks.</li>
+        <li><b>Security</b>: Credentials in DB; future move to prepared statements and externalized configs.</li>
+        <li><b>Portability</b>: Windows-friendly; local MySQL.</li>
+      </ul>
+
+      <h2>7) Team & Task Assignment</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Roles</h3>
+          <ul>
+            <li><b>Backend & DB</b>: JDBC integration, schema evolution</li>
+            <li><b>UI/UX</b>: Swing forms and flow</li>
+            <li><b>QA</b>: Test admissions, directories, exams</li>
+            <li><b>DevOps</b>: Packaging, environment docs</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Future Modules</h3>
+          <ul>
+            <li><b>Employee Management</b>: employee, attendance, payroll</li>
+            <li><b>Library Management</b>: books, copies, loans, fines</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>8) UX Design Showcase</h2>
+      <ul>
+        <li><b>Launch</b>: <code>Splash</code> (animated) → <code>Login</code> → <code>Project</code> menu</li>
+        <li><b>Admissions</b>: Forms with date picker; department dropdowns</li>
+        <li><b>Directories</b>: JTable listings with search/filter and print</li>
+        <li><b>Exams</b>: Course-grade matrix, CGPA panel, promotion message</li>
+      </ul>
+
+      <h2>9) Demonstration Plan & Milestones</h2>
+      <ol>
+        <li>Environment ready (JDK, MySQL, Connector/J); schema loaded</li>
+        <li>Authentication + Navigation</li>
+        <li>Admissions flows (Student/Teacher)</li>
+        <li>Directory views with filter/search + print</li>
+        <li>Departments & curriculum display</li>
+        <li>Examination + CGPA + promotion</li>
+        <li>Future: Employee and Library kickoff</li>
+      </ol>
+
+      <h2>10) Risks and Mitigation</h2>
+      <ul>
+        <li><b>Hardcoded DB credentials</b> → externalize to properties/env</li>
+        <li><b>Query concatenation</b> → migrate to PreparedStatement</li>
+        <li><b>Module data integrity</b> → enforce FKs and constraints</li>
+        <li><b>Email deliverability</b> → configurable SMTP + logging</li>
+      </ul>
+
+      <h2>11) Appendix: Key Code References</h2>
+      <ul>
+        <li><code>src/university/management/system/Conn.java</code> — JDBC helper</li>
+        <li><code>src/university/management/system/Login.java</code> — authentication</li>
+        <li><code>src/university/management/system/Project.java</code> — main menu</li>
+        <li><code>src/university/management/system/AddStudent.java</code> — student admissions</li>
+        <li><code>src/university/management/system/AddTeacher.java</code> — faculty admissions</li>
+        <li><code>src/university/management/system/StudentDetails.java</code> — student directory</li>
+        <li><code>src/university/management/system/TeacherDetails.java</code> — teacher directory</li>
+        <li><code>src/university/management/system/EnterMarks.java</code> — exams & CGPA</li>
+        <li><code>src/university/management/system/Dept.java</code> — department credits & courses</li>
+        <li><code>University Management System/Dept.sql</code> — sample DDL/queries</li>
+      </ul>
+
+      <div class="callout"><b></b></div>
+    </div>
+    <div class="footer"></div>
+  </div>
+</body>
+</html>

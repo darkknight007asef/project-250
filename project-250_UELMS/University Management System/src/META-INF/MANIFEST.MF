@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Class-Path: . lib/activation-1.1.1.jar lib/javax.mail-1.6.2.jar lib/jcalendar-tz-1.3.3-4.jar lib/mysql-connector-java-8.0.28.jar lib/rs2xml.jar
+Main-Class: university.management.system.Login
+Build-Jdk-Spec: 1.8
+Created-By: Maven Archiver 3.6.0
+
