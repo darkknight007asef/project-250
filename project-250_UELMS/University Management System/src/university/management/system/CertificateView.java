@@ -49,7 +49,12 @@ public class CertificateView extends JFrame implements ActionListener {
         // Verification Check
         eligible = checkEligibility();
         if (!eligible) {
-            JOptionPane.showMessageDialog(this, "You have not yet completed all requirements (8 Semesters Passed) to generate this certificate.", "Not Eligible", JOptionPane.WARNING_MESSAGE);
+            String details = buildEligibilityDiagnostics();
+            JOptionPane.showMessageDialog(
+                    this,
+                    "You have not yet completed all requirements (8 Semesters Passed) to generate this certificate.\n\n" + details,
+                    "Not Eligible",
+                    JOptionPane.WARNING_MESSAGE);
             setVisible(false);
             dispose();
             return;
@@ -57,17 +62,209 @@ public class CertificateView extends JFrame implements ActionListener {
 
         setVisible(true);
     }
+
+    private String buildEligibilityDiagnostics() {
+        try (Conn c = new Conn()) {
+            int summaryPass = 0;
+            try (java.sql.PreparedStatement ps = c.c.prepareStatement(
+                    "SELECT COUNT(*) FROM result_summary WHERE result='PASS' AND registration_no=?")) {
+                ps.setString(1, registrationNo);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) summaryPass = rs.getInt(1);
+                }
+            }
+
+            String dept = "";
+            int currentSem = 0;
+            try (java.sql.PreparedStatement ps = c.c.prepareStatement(
+                    "SELECT dept, current_semester FROM student_semester WHERE registration_no=?")) {
+                ps.setString(1, registrationNo);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        dept = rs.getString("dept");
+                        currentSem = rs.getInt("current_semester");
+                    }
+                }
+            }
+
+            int srTotal = 0;
+            int srApproved = 0;
+            int srApprovedSem = 0;
+            int srApprovedFails = 0;
+            try (java.sql.PreparedStatement ps = c.c.prepareStatement(
+                    "SELECT " +
+                            "COUNT(*) AS total_cnt, " +
+                            "SUM(CASE WHEN is_approved=TRUE THEN 1 ELSE 0 END) AS approved_cnt, " +
+                            "COUNT(DISTINCT CASE WHEN is_approved=TRUE THEN semester END) AS approved_sem_cnt, " +
+                            "SUM(CASE WHEN is_approved=TRUE AND status='FAIL' THEN 1 ELSE 0 END) AS approved_fail_cnt " +
+                            "FROM student_result WHERE registration_no=?")) {
+                ps.setString(1, registrationNo);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        srTotal = rs.getInt("total_cnt");
+                        srApproved = rs.getInt("approved_cnt");
+                        srApprovedSem = rs.getInt("approved_sem_cnt");
+                        srApprovedFails = rs.getInt("approved_fail_cnt");
+                    }
+                }
+            }
+
+            int marksSem = 0;
+            int marksRows = 0;
+            try (java.sql.PreparedStatement ps = c.c.prepareStatement(
+                    "SELECT COUNT(*) AS rows_cnt, COUNT(DISTINCT semester) AS sem_cnt " +
+                            "FROM student_marks WHERE registration_no=? AND grade_point > 0")) {
+                ps.setString(1, registrationNo);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        marksRows = rs.getInt("rows_cnt");
+                        marksSem = rs.getInt("sem_cnt");
+                    }
+                }
+            }
+
+            return "Debug (" + registrationNo + ")\n" +
+                    "result_summary PASS semesters: " + summaryPass + "/8\n" +
+                    "student_semester dept/current_semester: " + dept + "/" + currentSem + "\n" +
+                    "student_result rows total/approved: " + srTotal + "/" + srApproved + "\n" +
+                    "student_result approved semesters: " + srApprovedSem + "/8\n" +
+                    "student_result approved FAIL rows: " + srApprovedFails + "\n" +
+                    "student_marks rows/semesters (gp>0): " + marksRows + "/" + marksSem;
+        } catch (Exception ex) {
+            return "Debug failed: " + ex.getMessage();
+        }
+    }
     
     private boolean checkEligibility() {
-        // Simplified check: 8 Passed Semesters in Result Summary
-        // In reality, should check specific credits
+        // Primary check: 8 Passed Semesters in result_summary
+        // Fallback: verify each semester has all expected courses approved with no FAIL (latest exam_year per semester)
         try (Conn c = new Conn()) {
-            java.sql.ResultSet rs = c.s.executeQuery("SELECT COUNT(*) FROM result_summary WHERE result='PASS' AND registration_no='" + registrationNo + "'");
-            if (rs.next()) {
-                return rs.getInt(1) >= 8;
+            try (java.sql.PreparedStatement ps = c.c.prepareStatement(
+                    "SELECT COUNT(*) FROM result_summary WHERE result='PASS' AND registration_no=?")) {
+                ps.setString(1, registrationNo);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) >= 8) {
+                        return true;
+                    }
+                }
             }
-        } catch (Exception e) {}
-        return false; // Strict check
+
+            String dept = null;
+            int currentSem = 0;
+            try (java.sql.PreparedStatement ps = c.c.prepareStatement(
+                    "SELECT dept, current_semester FROM student_semester WHERE registration_no=?")) {
+                ps.setString(1, registrationNo);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) return false;
+                    dept = rs.getString("dept");
+                    currentSem = rs.getInt("current_semester");
+                }
+            }
+            if (dept == null || dept.trim().isEmpty()) return false;
+
+            // Do not strictly depend on current_semester promotion.
+            // Some databases have completed results but current_semester was not updated.
+            boolean strictCurriculumOk = true;
+            for (int sem = 1; sem <= 8; sem++) {
+                int expectedCourses = 0;
+                try (java.sql.PreparedStatement ps = c.c.prepareStatement(
+                        "SELECT COUNT(*) FROM department_courses WHERE dept=? AND sem=?")) {
+                    ps.setString(1, dept);
+                    ps.setInt(2, sem);
+                    try (java.sql.ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) expectedCourses = rs.getInt(1);
+                    }
+                }
+                if (expectedCourses <= 0) {
+                    strictCurriculumOk = false;
+                    break;
+                }
+
+                Integer latestYear = null;
+                try (java.sql.PreparedStatement ps = c.c.prepareStatement(
+                        "SELECT MAX(exam_year) FROM student_result WHERE registration_no=? AND semester=? AND is_approved=TRUE")) {
+                    ps.setString(1, registrationNo);
+                    ps.setInt(2, sem);
+                    try (java.sql.ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            int y = rs.getInt(1);
+                            latestYear = rs.wasNull() ? null : y;
+                        }
+                    }
+                }
+                if (latestYear == null) {
+                    strictCurriculumOk = false;
+                    break;
+                }
+
+                int approvedCourses = 0;
+                int failCount = 0;
+                try (java.sql.PreparedStatement ps = c.c.prepareStatement(
+                        "SELECT " +
+                                "COUNT(DISTINCT subject_code) AS approved_cnt, " +
+                                "SUM(CASE WHEN status='FAIL' THEN 1 ELSE 0 END) AS fail_cnt " +
+                                "FROM student_result " +
+                                "WHERE registration_no=? AND semester=? AND exam_year=? AND is_approved=TRUE")) {
+                    ps.setString(1, registrationNo);
+                    ps.setInt(2, sem);
+                    ps.setInt(3, latestYear);
+                    try (java.sql.ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            approvedCourses = rs.getInt("approved_cnt");
+                            failCount = rs.getInt("fail_cnt");
+                        }
+                    }
+                }
+
+                if (approvedCourses < expectedCourses) {
+                    strictCurriculumOk = false;
+                    break;
+                }
+                if (failCount > 0) {
+                    strictCurriculumOk = false;
+                    break;
+                }
+            }
+
+            if (strictCurriculumOk) return true;
+
+            // Loose fallback 1: student_result contains approved results for 8 distinct semesters and no FAILs.
+            try (java.sql.PreparedStatement ps = c.c.prepareStatement(
+                    "SELECT " +
+                            "COUNT(DISTINCT semester) AS sem_cnt, " +
+                            "SUM(CASE WHEN status='FAIL' THEN 1 ELSE 0 END) AS fail_cnt " +
+                            "FROM student_result WHERE registration_no=? AND is_approved=TRUE")) {
+                ps.setString(1, registrationNo);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        int semCnt = rs.getInt("sem_cnt");
+                        int failCnt = rs.getInt("fail_cnt");
+                        if (semCnt >= 8 && failCnt == 0) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            // Loose fallback 2: legacy student_marks contains entries for 8 distinct semesters with grade_point > 0.
+            try (java.sql.PreparedStatement ps = c.c.prepareStatement(
+                    "SELECT COUNT(DISTINCT semester) AS sem_cnt " +
+                            "FROM student_marks WHERE registration_no=? AND grade_point > 0")) {
+                ps.setString(1, registrationNo);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        int semCnt = rs.getInt("sem_cnt");
+                        if (semCnt >= 8) {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override

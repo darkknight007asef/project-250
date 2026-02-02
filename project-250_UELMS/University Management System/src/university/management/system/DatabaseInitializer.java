@@ -1309,6 +1309,20 @@ public final class DatabaseInitializer {
                 System.out.println("✓ Sample student_result data inserted");
             }
 
+            // Insert demo summaries to showcase At-Risk dashboard variety (MEDIUM/HIGH)
+            // Uses CGPA thresholds in AdminAtRiskStudents: HIGH < 2.50, MEDIUM < 3.00
+            System.out.println("Inserting demo result_summary rows for At-Risk dashboard...");
+            st.execute("INSERT IGNORE INTO result_summary (registration_no, semester, exam_year, total_marks, obtained_marks, percentage, gpa, result) VALUES " +
+                    // MEDIUM risk examples (CGPA around 2.80-2.95)
+                    "('2026-331-006', 7, 2025, 600, 435, 72.50, 2.95, 'PASS')," +
+                    "('2026-331-006', 8, 2026, 600, 420, 70.00, 2.75, 'PASS')," +
+                    "('2026-331-007', 7, 2025, 600, 426, 71.00, 2.85, 'PASS')," +
+                    "('2026-331-007', 8, 2026, 600, 414, 69.00, 2.70, 'PASS')," +
+                    // HIGH risk example (CGPA around 2.35)
+                    "('2026-331-005', 7, 2025, 600, 378, 63.00, 2.40, 'PASS')," +
+                    "('2026-331-005', 8, 2026, 600, 366, 61.00, 2.30, 'PASS')");
+            System.out.println("✓ Demo result_summary rows inserted for At-Risk dashboard");
+
             // Insert sample subjects (for result management)
             rs = st.executeQuery("SELECT COUNT(*) FROM subject");
             if (rs.next() && rs.getInt(1) == 0) {
